@@ -24,6 +24,15 @@ app.use('/api/auth', authRoutes);
 const taskRoutes = require('./routes/taskRoutes');
 app.use('/api/tasks', taskRoutes);
 
+// Health check route for cloud hosting (Render, Railway, Uptime monitors)
+app.get('/api/health', (req, res) => {
+    res.status(200).json({ 
+        status: 'ok', 
+        uptime: process.uptime(),
+        timestamp: new Date().toISOString() 
+    });
+});
+
 // Another route for testing
 app.get('/api/test', (req, res) => {
     res.json({ message: 'Hello from the backend!' });
@@ -41,7 +50,6 @@ app.get('/api/profile', verifyToken, (req, res) => {
     });
 });
 
-
 // Database check route (for browser)
 app.get('/api/db-check', (req, res) => {
     // Hum MySQL se pooch rahe hain ki uske paas kaunsi tables hain
@@ -57,8 +65,25 @@ app.get('/api/db-check', (req, res) => {
     });
 });
 
-// Start the server
-const PORT = 3000;
-app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+// Catch-all route: Return index.html for all non-API GET requests (SPA friendly)
+app.get('*', (req, res) => {
+    if (req.path.startsWith('/api')) {
+        return res.status(404).json({ error: 'Endpoint not found' });
+    }
+    res.sendFile(path.join(__dirname, '../frontend/index.html'));
 });
+
+// Start the server
+const PORT = process.env.PORT || 3000;
+const server = app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});
+
+// Graceful shutdown handling
+process.on('SIGTERM', () => {
+    console.log('SIGTERM signal received: closing HTTP server...');
+    server.close(() => {
+        console.log('HTTP server closed.');
+    });
+});
+
