@@ -20,9 +20,19 @@ app.use(express.static(path.join(__dirname, '../frontend')));
 // Import and use routes
 const authRoutes = require('./routes/authRoutes');
 app.use('/api/auth', authRoutes);
+app.use('/api', authRoutes); // Supports /api/register, /api/login, /api/send-otp directly
 
 const taskRoutes = require('./routes/taskRoutes');
 app.use('/api/tasks', taskRoutes);
+
+// Events route (for notifications / system events)
+app.get('/api/events', (req, res) => {
+    res.status(200).json({
+        success: true,
+        message: 'Events endpoint operational',
+        events: []
+    });
+});
 
 // Health check route for cloud hosting (Render, Railway, Uptime monitors)
 app.get('/api/health', (req, res) => {
