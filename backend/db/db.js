@@ -5,29 +5,35 @@ dotenv.config({ path: path.resolve(__dirname, '../.env') });
 const mysql = require('mysql2');
 
 // Determine SSL options for cloud MySQL (e.g. Aiven, TiDB, Railway, PlanetScale)
-const useSsl = process.env.DB_SSL === 'true' || 
-              (process.env.DATABASE_URL && process.env.DATABASE_URL.includes('ssl'));
+const isCloudDb = Boolean(process.env.DATABASE_URL) || process.env.DB_SSL === 'true';
 
 // Build pool configuration
-const poolConfig = process.env.DATABASE_URL 
-    ? {
-        uri: process.env.DATABASE_URL,
+let poolConfig;
+if (process.env.DATABASE_URL) {
+    // Remove query params like ?ssl-mode=REQUIRED for clean mysql2 URI parsing
+    const cleanUri = process.env.DATABASE_URL.replace(/\?.*$/, '');
+    poolConfig = {
+        uri: cleanUri,
         waitForConnections: true,
         connectionLimit: 10,
         queueLimit: 0,
-        ssl: useSsl ? { rejectUnauthorized: false } : undefined
-      }
-    : {
+        ssl: {
+            rejectUnauthorized: false
+        }
+    };
+} else {
+    poolConfig = {
         host: process.env.DB_HOST || 'localhost',
         user: process.env.DB_USER || 'root',
         password: process.env.DB_PASSWORD || '',
-        database: process.env.DB_NAME || 'task_manager',
+        database: process.env.DB_NAME || 'defaultdb',
         port: Number(process.env.DB_PORT) || 3306,
         waitForConnections: true,
         connectionLimit: 10,
         queueLimit: 0,
-        ssl: useSsl ? { rejectUnauthorized: false } : undefined
-      };
+        ssl: isCloudDb ? { rejectUnauthorized: false } : undefined
+    };
+}
 
 const pool = mysql.createPool(poolConfig);
 
