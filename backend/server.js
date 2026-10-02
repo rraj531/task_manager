@@ -73,17 +73,23 @@ app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/index.html'));
 });
 
-// Start the server
+// Start the server (listen when running directly or on traditional cloud platforms)
 const PORT = process.env.PORT || 3000;
-const server = app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
-
-// Graceful shutdown handling
-process.on('SIGTERM', () => {
-    console.log('SIGTERM signal received: closing HTTP server...');
-    server.close(() => {
-        console.log('HTTP server closed.');
+if (!process.env.VERCEL) {
+    const server = app.listen(PORT, () => {
+        console.log(`Server is running on port ${PORT}`);
     });
-});
+
+    // Graceful shutdown handling
+    process.on('SIGTERM', () => {
+        console.log('SIGTERM signal received: closing HTTP server...');
+        server.close(() => {
+            console.log('HTTP server closed.');
+        });
+    });
+}
+
+// Export app for Vercel serverless deployments
+module.exports = app;
+
 
