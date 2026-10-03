@@ -30,6 +30,10 @@ function showToast(message, type = 'success') {
 }
 
 // ─── API HELPER ───────────────────────────────────────────────────────────
+// Base URL for API requests. Defaults to '' (relative path on same origin).
+// Can be customized via window.API_BASE (e.g. if backend is on Render/Railway).
+const API_BASE = (window.API_BASE || '').replace(/\/$/, '');
+
 async function apiFetch(endpoint, options = {}) {
     const headers = options.headers || {};
     if (state.token) {
@@ -41,7 +45,8 @@ async function apiFetch(endpoint, options = {}) {
     }
 
     try {
-        const response = await fetch(endpoint, { ...options, headers });
+        const url = endpoint.startsWith('http') ? endpoint : `${API_BASE}${endpoint}`;
+        const response = await fetch(url, { ...options, headers });
         const data = await response.json().catch(() => ({}));
 
         if (response.status === 401 || response.status === 403) {
@@ -550,7 +555,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (state.token) {
         try {
             // Direct fetch (not apiFetch) to avoid auto-logout loop on invalid token
-            const res = await fetch('/api/profile', {
+            const res = await fetch(`${API_BASE}/api/profile`, {
                 headers: { 'Authorization': `Bearer ${state.token}` }
             });
 

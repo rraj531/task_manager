@@ -21,12 +21,14 @@ app.use(express.static(path.join(__dirname, '../frontend')));
 const authRoutes = require('./routes/authRoutes');
 app.use('/api/auth', authRoutes);
 app.use('/api', authRoutes); // Supports /api/register, /api/login, /api/send-otp directly
+app.use('/auth', authRoutes);
 
 const taskRoutes = require('./routes/taskRoutes');
 app.use('/api/tasks', taskRoutes);
+app.use('/tasks', taskRoutes);
 
 // Events route (for notifications / system events)
-app.get('/api/events', (req, res) => {
+app.get(['/api/events', '/events'], (req, res) => {
     res.status(200).json({
         success: true,
         message: 'Events endpoint operational',
@@ -35,7 +37,7 @@ app.get('/api/events', (req, res) => {
 });
 
 // Health check route for cloud hosting (Render, Railway, Uptime monitors)
-app.get('/api/health', (req, res) => {
+app.get(['/api/health', '/health'], (req, res) => {
     res.status(200).json({ 
         status: 'ok', 
         uptime: process.uptime(),
@@ -44,7 +46,7 @@ app.get('/api/health', (req, res) => {
 });
 
 // Another route for testing
-app.get('/api/test', (req, res) => {
+app.get(['/api/test', '/test'], (req, res) => {
     res.json({ message: 'Hello from the backend!' });
 });
 
@@ -52,7 +54,7 @@ app.get('/api/test', (req, res) => {
 const verifyToken = require('./middleware/authMiddleware');
 
 // Yeh route sirf wahi access kar sakta hai jiske paas valid JWT token hai
-app.get('/api/profile', verifyToken, (req, res) => {
+app.get(['/api/profile', '/profile'], verifyToken, (req, res) => {
     // req.user middleware ne set kiya tha (decoded JWT data)
     res.json({
         message: 'You accessed a PROTECTED route!',
@@ -61,7 +63,7 @@ app.get('/api/profile', verifyToken, (req, res) => {
 });
 
 // Database check route (for browser)
-app.get('/api/db-check', (req, res) => {
+app.get(['/api/db-check', '/db-check'], (req, res) => {
     // Hum MySQL se pooch rahe hain ki uske paas kaunsi tables hain
     db.query('SHOW TABLES', (err, results) => {
         if (err) {
