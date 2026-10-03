@@ -76,11 +76,14 @@ app.get('/api/db-check', (req, res) => {
 });
 
 // Catch-all route: Return index.html for all non-API GET requests (SPA friendly)
-app.get('*', (req, res) => {
+app.use((req, res) => {
     if (req.path.startsWith('/api')) {
         return res.status(404).json({ error: 'Endpoint not found' });
     }
-    res.sendFile(path.join(__dirname, '../frontend/index.html'));
+    if (req.method === 'GET') {
+        return res.sendFile(path.join(__dirname, '../frontend/index.html'));
+    }
+    res.status(404).json({ error: 'Not Found' });
 });
 
 // Start the server (listen when running directly or on traditional cloud platforms)
